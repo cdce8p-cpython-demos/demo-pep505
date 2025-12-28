@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Marc Mueller">
+        <meta name="description" content="Python PEP 505 - Interactive WASM Demo">
+        <title>Python PEP 505 - Interactive Demo</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/xterm@4.18.0/css/xterm.css"
+            crossorigin
+            integrity="sha384-4eEEn/eZgVHkElpKAzzPx/Kow/dTSgFk1BNe+uHdjHa+NkZJDh5Vqkq31+y7Eycd"
+        >
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="./style.css">
+        <script
+            src="https://unpkg.com/xterm@4.18.0/lib/xterm.js"
+            crossorigin
+            integrity="sha384-yYdNmem1ioP5Onm7RpXutin5A8TimLheLNQ6tnMi01/ZpxXdAwIm2t4fJMx1Djs+"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.43.1/ace.js"
+            crossorigin
+            integrity="sha512-kmA5vhcxOkZI0ReiKJMGNb8/KKbgbExIlnt6aXuPtl86AgHBEi6OHHOz2wsTazBDGZKxe7fmiE+pIuZJQks4+A=="
+        ></script>
+        <script
+            src="./script.js"
+            type="module">
+        </script>
+    </head>
+    <body>
+        <div class="warning-banner">
+            <span class="warning-banner-icon">⚠️</span>
+            <span class="warning-banner-text">This implementation may be out of date or contain bugs. Last updated 2025-12-28.</span>
+        </div>
+        <div id="repldemo">
+            <div class="container">
+                <header>
+                    <div class="badge">PEP 505 Implementation</div>
+                    <h1>PEP 505 - None-aware operators</h1>
+                    <!-- <div class="authors-section">
+                        <div class="authors-container">
+                            <a href="https://github.com/cdce8p" target="_blank" class="author-avatar" data-name="Marc Mueller" data-username="@cdce8p">
+                                <img src="avatars/cdce8p.png" alt="cdce8p">
+                            </a>
+                        </div>
+                    </div> -->
+                    <p class="subtitle">
+                        Explore the semantics from the proposal with this interactive WebAssembly demo.
+                        Write Python code in the editor, run it in your browser, or experiment in the interactive REPL.
+                        <br><br>The demo is based on <a href="https://peps.python.org/pep-0505/" class="github-link" target="_blank">PEP 505</a> and incorporates ideas from the discussion since.<br><br>
+                        <a href="https://discuss.python.org/t/revisiting-pep-505-none-aware-operators/74568" class="github-link" target="_blank">Latest discuss.python.org thread →</a>
+                    </p>
+                    <!-- <a href="https://peps.python.org/pep-0505/" target="_blank" class="pep-button">
+                        <span class="pep-button-icon">📜</span>
+                        Read PEP 505 Specification
+                    </a> -->
+                </header>
+
+                <div class="main-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">🛠️ Available Operators</h2>
+                        </div>
+                        <div class="card-body">
+                            <table style="color: var(--text-secondary); line-height: 1.8;">
+                                <tr>
+                                    <td style="padding-right: 1rem">▶ None-aware attribute access</td>
+                                    <td><code>a?.b</code></td>
+                                    <td><code>_t.b if (_t := a) is not None else None</code></td>
+                                </tr>
+                                <tr>
+                                    <td>▶ None-aware subscript</td>
+                                    <td><code>a?[b]</code></td>
+                                    <td><code>_t[b] if (_t := a) is not None else None</code></td>
+                                </tr>
+                                <tr>
+                                    <td>▶ Coalesce</td>
+                                    <td><code>a ?? b</code></td>
+                                    <td><code>_t if (_t := a) is not None else b</code></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>▶ Coalesce assign</td>
+                                    <td><code>a ??= b</code></td>
+                                    <td><code>if a is None: a = b</code></td>
+                                </tr>
+                                <tr>
+                                    <td>▶ Maybe</td>
+                                    <td style="padding-right: 1rem;"><code>maybe a.b</code></td>
+                                    <td><code>_t.b if (_t := a) is not None else None</code></td>
+                                </tr>
+                                <tr><td colspan="3">The <code>is not None</code> check for <strong><code>Maybe</code></strong> is performed for every attribute and subscript.</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mode-tabs">
+                    <button class="mode-tab active" data-mode="editor">💻 Code Editor</button>
+                    <button class="mode-tab" data-mode="repl">🐍 Interactive REPL</button>
+                </div>
+
+                <div id="editor-mode" class="mode-content active">
+                    <div class="editor-terminal-layout">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Code Editor</h2>
+                            </div>
+                            <div class="card-body">
+                                <div id="editor"># Demonstrating PEP 505 None-aware operators
+from dataclasses import dataclass
+
+@dataclass
+class Item:
+    name: str
+    price: float
+
+@dataclass
+class ShoppingCard:
+    items: list[Item] | None = None
+
+@dataclass
+class Customer:
+    name: str | None = None
+    card: ShoppingCard | None = None
+    discount: float | None = None
+
+alex = Customer(
+    name="Alex",
+    card=ShoppingCard(
+        items=[
+            Item("Apples", 3.14),
+            Item("Bananas", 2.72),
+        ]))
+
+sandra = Customer(card=ShoppingCard())
+
+for customer in (alex, sandra):
+    print(f"Customer: {customer.name?.upper()}")
+    customer.name ??= "Unknown customer"
+    print(f"Updated name: {customer.name}")
+
+    total = sum(
+        item.price for item in customer.card?.items ?? ()
+    )
+    print(f"Shopping card total: {total}")
+
+    first_item = customer.card?.items?[0]
+    print(f"First item in shopping card: {first_item}")
+
+    second_item = maybe customer.card.items[1]
+    print(f"Second item in shopping card: {second_item}")
+
+    print("---")
+
+</div>
+                                <div class="button-container" style="margin-top: 1rem;">
+                                    <button id="run" disabled>▶ Run Code</button>
+                                    <button id="stop" disabled>⬛ Stop</button>
+                                    <button id="clear" disabled>🗑 Clear</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Terminal Output</h2>
+                            </div>
+                            <div class="card-body">
+                                <div id="terminal"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="repl-mode" class="mode-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Interactive REPL</h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="repl-notice" style="background: rgba(99, 102, 241, 0.15); border: 1px solid var(--accent-primary); border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 1rem; color: var(--text-primary); font-size: 0.875rem; display: none;">
+                            </div>
+                            <div id="terminal-repl"></div>
+                            <div class="button-container" style="margin-top: 1rem;">
+                                <button id="repl-restart" disabled>🔄 Restart REPL</button>
+                                <button id="repl-clear" disabled>🗑 Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <!-- <h2>About None-aware operators</h2> -->
+                    <p>
+                        <strong>Note:</strong> This is an experimental WebAssembly build of Python.
+                        Some features like networking, subprocesses, and threading are not available.
+                        Please report issues regarding the demo or implementation to
+                        <a href="https://github.com/cdce8p-cpython-demos/demo-pep505" target="_blank">
+                            the implementation repository
+                        </a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="buffererror" class="error" style="display: none">
+            <div class="container">
+                <p>
+                    <code>SharedArrayBuffer</code>, which is required for this demo,
+                    is not available in your browser environment. One common cause
+                    of this failure is loading <code>index.html</code> directly in
+                    your browser instead of using <code>server.py</code> as
+                    described in
+                    <a
+                        href="https://github.com/python/cpython/blob/main/Tools/wasm/README.md#the-web-example"
+                        target="_blank"
+                    >
+                        Tools/wasm/README.md
+                    </a>.
+                </p>
+                <p>
+                    For more details about security requirements for
+                    <code>SharedArrayBuffer</code>, see
+                    <a
+                        href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements"
+                        target="_blank"
+                      >this MDN page</a
+                    >.
+                </p>
+            </div>
+            <script>
+              if (typeof SharedArrayBuffer === 'undefined') {
+                  document.getElementById('repldemo').style.display = 'none';
+                  document.getElementById('buffererror').style.display = 'block';
+              }
+            </script>
+        </div>
+
+        <footer>
+            <div class="container">
+                <p>Demo created by <a href="https://github.com/cdce8p" class="github-link" target="_blank">Marc Mueller</a> based on the idea from Pablo Galindo Salgado for PEP 810.</p>
+                <!-- <a href="https://github.com/cdce8p-cpython-demos/demo-pep505" class="github-link" target="_blank">
+                    View on GitHub →
+                </a> -->
+            </div>
+        </footer>
+    </body>
+</html>
