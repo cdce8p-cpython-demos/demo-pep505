@@ -19,6 +19,7 @@ class WorkerManager {
         this.standardIO = standardIO;
         this.readyCallBack = readyCallBack;
         this.finishedCallback = finishedCallback;
+        this.silentFinalize = null;
 
         this.initialiseWorker();
     }
@@ -36,6 +37,7 @@ class WorkerManager {
     }
 
     async run(options) {
+        this.silentFinalize = options.silentFinalize || false;
         this.worker.postMessage({
             type: "run",
             args: options.args || [],
@@ -48,7 +50,9 @@ class WorkerManager {
             this.worker.terminate();
             this.worker = null;
         }
-        this.standardIO.message("Worker process terminated.");
+        if (!this.silentFinalize) {
+            this.standardIO.message("Worker process terminated.");
+        }
         this.initialiseWorker();
     }
 
@@ -86,9 +90,11 @@ class WorkerManager {
                 this.handleStdinData(inputValue);
             });
         } else if (type === "finished") {
-            this.standardIO.message(
-                `Exited with status: ${event.data.returnCode}`,
-            );
+            if (!this.silentFinalize) {
+                this.standardIO.message(
+                    `Exited with status: ${event.data.returnCode}`,
+                );
+            }
             this.finishedCallback();
         }
     };
@@ -501,6 +507,8 @@ const runButton = document.getElementById("run");
 const replButton = document.getElementById("repl");
 const stopButton = document.getElementById("stop");
 const clearButton = document.getElementById("clear");
+const astButton = document.getElementById("ast");
+const disButton = document.getElementById("dis");
 
 window.onload = () => {
     const terminal = new WasmTerminal();
@@ -538,10 +546,14 @@ window.onload = () => {
     const programRunning = (isRunning) => {
         if (isRunning) {
             runButton.setAttribute("disabled", true);
+            astButton.setAttribute("disabled", true);
+            disButton.setAttribute("disabled", true);
             stopButton.removeAttribute("disabled");
         } else {
             runButton.removeAttribute("disabled");
             stopButton.setAttribute("disabled", true);
+            astButton.removeAttribute("disabled");
+            disButton.removeAttribute("disabled");
         }
     };
 
@@ -553,6 +565,30 @@ window.onload = () => {
         pythonWorkerManager.run({
             args: ["main.py"],
             files: { "main.py": code },
+        });
+    });
+
+    astButton.addEventListener("click", (e) => {
+        terminal.clear();
+        terminal.reset();
+        programRunning(true);
+        const code = editor.getValue();
+        pythonWorkerManager.run({
+            args: ["-m", "ast", "-i", "2", "main.py"],
+            files: { "main.py": code },
+            silentFinalize: true,
+        });
+    });
+
+    disButton.addEventListener("click", (e) => {
+        terminal.clear();
+        terminal.reset();
+        programRunning(true);
+        const code = editor.getValue();
+        pythonWorkerManager.run({
+            args: ["-m", "dis", "main.py"],
+            files: { "main.py": code },
+            silentFinalize: true,
         });
     });
 
@@ -568,6 +604,8 @@ window.onload = () => {
     const readyCallback = () => {
         runButton.removeAttribute("disabled");
         clearButton.removeAttribute("disabled");
+        astButton.removeAttribute("disabled");
+        disButton.removeAttribute("disabled");
     };
 
     const finishedCallback = () => {
