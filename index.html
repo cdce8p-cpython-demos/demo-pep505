@@ -87,15 +87,15 @@
                                 </tr>
                                 <tr>
                                     <td>▶ Coalesce assign</td>
-                                    <td><code>a ??= b</code></td>
+                                    <td style="padding-right: 1rem"><code>a ??= b</code></td>
                                     <td><code>if a is None: a = b</code></td>
                                 </tr>
-                                <tr>
+                                <!-- <tr>
                                     <td>▶ Maybe</td>
                                     <td style="padding-right: 1rem;"><code>maybe a.b</code></td>
                                     <td><code>_t.b if (_t := a) is not None else None</code></td>
                                 </tr>
-                                <tr><td colspan="3">The <code>is not None</code> check for <strong><code>Maybe</code></strong> is performed for every attribute and subscript.</td></tr>
+                                <tr><td colspan="3">The <code>is not None</code> check for <strong><code>Maybe</code></strong> is performed for every attribute and subscript.</td></tr> -->
                             </table>
                         </div>
                     </div>
@@ -153,9 +153,6 @@ for customer in (alex, sandra):
 
     first_item = customer.card?.items?[0]
     print(f"First item in shopping card: {first_item}")
-
-    second_item = maybe customer.card.items[1]
-    print(f"Second item in shopping card: {second_item}")
 
     print("---")
 
