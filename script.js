@@ -700,10 +700,10 @@ import code
 import builtins
 
 def _interrupt_aware_input(prompt=''):
-line = builtins.input(prompt)
-if line.strip() == "${_magic_ctrlc_string}":
-raise KeyboardInterrupt()
-return line
+    line = builtins.input(prompt)
+    if line.strip() == "${_magic_ctrlc_string}":
+        raise KeyboardInterrupt()
+    return line
 
 cprt = 'Type "help", "copyright", "credits" or "license" for more information.'
 banner = f'Python {sys.version} on {sys.platform}\\n{cprt}'
