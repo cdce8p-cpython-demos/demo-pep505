@@ -7,5 +7,5 @@ __pycache__/
 .vscode/
 python-*/
 python*.zip
-!python-3.15.zip
+!python3.15.zip
 example.py
